@@ -4,7 +4,7 @@
  */
 
  /**
-  * @file batapp_pkttypes.c
+  * @file batapp_pkttypes.h
   * @brief Battery Packet Types Interface
   * @author Subhasish Ghosh
   */
