@@ -23,16 +23,17 @@
 	*/
 bool batapp_pkt_error(void* pkt, size_t len, batapp_pkttypes_t pkttype) {
 	unsigned char* pktdata = (unsigned char*)pkt;
+	unsigned char pkterr = 0;
 
 	/* add up byte-by-byte */
-	for (int i = 1; i < len - 1; i++) {
-		pktdata[0] += pktdata[i];
+	for (int i = 0; i < len - 1; i++) {
+		pkterr += pktdata[i];
 	}
 
-	pktdata[0] += pkttype;
+	pkterr += pkttype;
 
 	/* check if error value matched */
-	return (pktdata[0] == pktdata[len - 1]);
+	return (pkterr == pktdata[len - 1]);
 }
 
 /**

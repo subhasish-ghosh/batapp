@@ -32,5 +32,8 @@ int main(int argc, char** argv)
 	}
 
 	/* initiate the packet processing engine */
-	return batapp_pktparser_run(argv[1]);
+	if (!batapp_pktparser_run(argv[1]))
+		return -1;
+
+	return 0;
 }

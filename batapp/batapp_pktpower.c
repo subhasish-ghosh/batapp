@@ -58,7 +58,7 @@ typedef enum {
 /* This struct provides a storage for state+timestamp */
 typedef struct {
 	batapp_pktpower_state_t state;
-	uint64_t ts;
+	uint32_t ts;
 } batapp_pktpower_state_ch_dat_t;
 
 /* This is the logging buffer provided by the packet type */
@@ -115,7 +115,7 @@ static bool batapp_pktpower_step(FILE* fp) {
 	/* init local and static variables */
 	batapp_pktpower_t pktpower; /* this is used to retrieve the aligned packet data */
 	bool retval = false;
-	static uint64_t acc_dbounce = 0; /* this is used to store the accumulated debounce */
+	static uint32_t acc_dbounce = 0; /* this is used to store the accumulated debounce */
 	/* store acctual, current and previous state and time info*/
 	static batapp_pktpower_state_ch_dat_t state_change_data[] = {
 		{BATAPP_PKTPOWER_STATE_0, 0},
@@ -129,13 +129,20 @@ static bool batapp_pktpower_step(FILE* fp) {
 		return retval;
 	}
 
+	/* check for any packet errors, this gets reported as ERR; while printing the log */
+	retval = batapp_pkt_error(&pktpower, sizeof(batapp_pktpower_t), BATAPP_PACKETSTYPE_BATTERYPOWER);
+	if (!retval) {
+		batapp_pkt_logbuff(batapp_logbuff, "packet error!");
+		return retval;
+	}
+
 	/* update the current state data */
 	state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].state = batapp_pktpower_getstate(batapp_ntohl(pktpower.v), batapp_ntohll(pktpower.c));
 	state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts = batapp_ntohl(pktpower.ts);
 
 	/* check if the current and previous states are same, then accumulate debounce */
 	if (state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].state == state_change_data[BATAPP_PKTPOWER_STATE_CH_PREV].state) {
-		acc_dbounce = state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts - state_change_data[BATAPP_PKTPOWER_STATE_CH_PREV].ts;
+		acc_dbounce += state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts - state_change_data[BATAPP_PKTPOWER_STATE_CH_PREV].ts;
 	}
 	else {
 		acc_dbounce = 0; /* if new state, then restart accumulating debounce */
@@ -155,11 +162,8 @@ static bool batapp_pktpower_step(FILE* fp) {
 			state_change_data[BATAPP_PKTPOWER_STATE_CH].ts = state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts - acc_dbounce;
 			state_change_data[BATAPP_PKTPOWER_STATE_CH].state = state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].state;
 
-			/* check for any packet errors, this gets reported as ERR; while printing the log */
-			retval = batapp_pkt_error(&pktpower, sizeof(batapp_pktpower_t), BATAPP_PACKETSTYPE_BATTERYPOWER);
-
-			/* log data if state changed or packet error */
-			if ((from_state != to_state) || (!retval)) {
+			/* log data if state changed */
+			if (from_state != to_state) {
 				batapp_pkt_logbuff(batapp_logbuff, "%u;%u;%u", state_change_data[BATAPP_PKTPOWER_STATE_CH].ts / 1000, from_state, to_state);
 			}
 			else {
@@ -168,7 +172,7 @@ static bool batapp_pktpower_step(FILE* fp) {
 			}
 		}
 		else {
-			/* log ERR; is state transition is not valid */
+			/* log ERR; state transition is not valid */
 			batapp_pkt_logbuff(batapp_logbuff, "%u;%u;%u",
 				(state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts - acc_dbounce) / 1000, from_state, to_state);
 			retval = false;

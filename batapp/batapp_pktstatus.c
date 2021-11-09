@@ -67,7 +67,6 @@ static bool batapp_pktstatus_step(FILE* fp) {
 
 	/* check for any packet errors, this gets reported as ERR; while printing the log */
 	retval = batapp_pkt_error(&pktstatus, sizeof(batapp_pktstatus_t), BATAPP_PACKETSTYPE_BATTERYSTATUS);
-
 	return retval;
 }
 
