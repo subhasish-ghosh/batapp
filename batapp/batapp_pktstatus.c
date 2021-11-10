@@ -62,11 +62,22 @@ static bool batapp_pktstatus_step(FILE* fp) {
 		return retval;
 	}
 
-	/* log battery status */
-	batapp_pkt_logbuff(batapp_logbuff, "%u;%s", batapp_ntohl(pktstatus.ts) / 1000, batapp_status[pktstatus.status]);
-
 	/* check for any packet errors, this gets reported as ERR; while printing the log */
 	retval = batapp_pkt_error(&pktstatus, sizeof(batapp_pktstatus_t), BATAPP_PACKETSTYPE_BATTERYSTATUS);
+	if (!retval) {
+		batapp_pkt_logbuff(batapp_logbuff, "packet error!");
+		return retval;
+	}
+
+	/* log battery status */
+	if (pktstatus.status < ARRAY_SIZE(batapp_status)) {
+		batapp_pkt_logbuff(batapp_logbuff, "%u;%s", batapp_ntohl(pktstatus.ts) / 1000, batapp_status[pktstatus.status]);
+	}
+	else {
+		batapp_pkt_logbuff(batapp_logbuff, "invalid status!");
+		retval = false;
+	}
+
 	return retval;
 }
 

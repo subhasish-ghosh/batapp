@@ -13,7 +13,7 @@
 #include "batapp_logger.h"
 #include "batapp_pktutils.h"
 
-/* The minimum log len */
+  /* The minimum log len */
 #define BATAPP_PKTPOWER_LOGLEN		100UL
 /* Packet debounce interval on ms */
 #define BATAPP_PKTPOWER_DBOUNCE		10UL
@@ -137,6 +137,12 @@ static bool batapp_pktpower_step(FILE* fp) {
 	}
 
 	/* update the current state data */
+	batapp_pktpower_state_t loc_state = batapp_pktpower_getstate(batapp_ntohl(pktpower.v), batapp_ntohll(pktpower.c));
+	if (loc_state >= BATAPP_PKTPOWER_STATE_MAX) {
+		batapp_pkt_logbuff(batapp_logbuff, "invalid state!");
+		return retval;
+	}
+
 	state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].state = batapp_pktpower_getstate(batapp_ntohl(pktpower.v), batapp_ntohll(pktpower.c));
 	state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts = batapp_ntohl(pktpower.ts);
 
