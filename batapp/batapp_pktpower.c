@@ -170,7 +170,7 @@ static bool batapp_pktpower_step(FILE* fp) {
 
 			/* log data if state changed */
 			if (from_state != to_state) {
-				batapp_pkt_logbuff(batapp_logbuff, "%u;%u;%u", state_change_data[BATAPP_PKTPOWER_STATE_CH].ts / 1000, from_state, to_state);
+				batapp_pkt_logbuff(batapp_logbuff, "%u;%u-%u", state_change_data[BATAPP_PKTPOWER_STATE_CH].ts / 1000, from_state, to_state);
 			}
 			else {
 				/* don't log anything is same state */
@@ -179,7 +179,7 @@ static bool batapp_pktpower_step(FILE* fp) {
 		}
 		else {
 			/* log ERR; state transition is not valid */
-			batapp_pkt_logbuff(batapp_logbuff, "%u;%u;%u",
+			batapp_pkt_logbuff(batapp_logbuff, "%u;%u-%u",
 				(state_change_data[BATAPP_PKTPOWER_STATE_CH_CURR].ts - acc_dbounce) / 1000, from_state, to_state);
 			retval = false;
 		}
